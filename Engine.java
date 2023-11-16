@@ -9,6 +9,7 @@ import java.awt.event.ActionListener;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -62,8 +63,10 @@ public class Engine implements ActionListener {
 	private int num1, num2, result;
 	private char operation;
 	
+	private String operacion = null;
+	
 	/**
-	 * Constructor que inicializa la calculadora e implementa la interfaz grafica
+	 * Constructor que inicializa la calculadora e implementa la interfaz grafica. Llama a setSettings() y addActionEvent()
 	 */
 	Engine() {
 		// CREAR EL JFRAME Y LOS BOTONES
@@ -73,7 +76,10 @@ public class Engine implements ActionListener {
 		buttonPanel = new JPanel();
 
 		display = new JTextField(30);
-
+		display.setFont(new Font("Fuente", Font.ITALIC, 24));
+		display.setColumns(15); //AJUSTA EL TAMAÑO PARA PODER PONER TAMAÑO DE LETRA MAS GRANDE SIN QUE SE SALGA DE LA INTERFAZ
+		display.setHorizontalAlignment(JTextField.CENTER); //PONE EL TEXTO EN EL CENTYRO DEL DISPLAY
+		
 		n0 = new JButton("0");
 		n1 = new JButton("1");
 		n2 = new JButton("2");
@@ -99,11 +105,14 @@ public class Engine implements ActionListener {
 		addActionEvent();
 
 	} // CIERRE ENGINE()
-
+	
+	/**
+	 * Modifica la interfaz grafica, agregando layouts y usa setFeaturesButton()
+	 */
 	public void setSettings() {
 		frame.setLayout(new BorderLayout());
 		contentPanel.setLayout(new BorderLayout());
-		buttonPanel.setLayout(new GridLayout(4, 4));
+		buttonPanel.setLayout(new GridLayout(4, 4, 10, 10));
 
 		// AÑADIR EL JTEXFIELD AL PANEL
 		displayPanel.add(display, BorderLayout.CENTER);
@@ -170,18 +179,33 @@ public class Engine implements ActionListener {
 		setFeaturesButton(reset, ButtonType.REGULAR);
 		setFeaturesButton(equal, ButtonType.OPERATOR);
 		setFeaturesButton(divide, ButtonType.OPERATOR);
+		
+		displayPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+	    buttonPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+	    
+	    displayPanel.setBackground(Color.BLACK);
+	    buttonPanel.setBackground(Color.BLACK);
 	} // CIERRE SET_SETTINGS()
-
+	
+	/**
+	 * Agrega al boton el enum, color y la fuente
+	 * 
+	 * @param _button
+	 * @param _type
+	 */
 	public void setFeaturesButton(JButton _button, ButtonType _type) {
 		// SI ES TIPO REGULAR, EN GRIS. SI ES TIPO OPERATOR, EN MAGENTA
 		if (_type == ButtonType.REGULAR) {
 			_button.setBackground(Color.LIGHT_GRAY);
 			_button.setFont(new Font("Fuente", Font.ITALIC, 20));
 		} else {
-			_button.setBackground(Color.MAGENTA);
+			_button.setBackground(new Color(255, 105, 180));
 		}
 	} // CIERRA SET_FEATURES_BUTTON
-
+	
+	/**
+	 * Agrega Action Listener a los botones
+	 */
 	public void addActionEvent() {
 		n7.addActionListener(this);
 		n8.addActionListener(this);
@@ -200,15 +224,58 @@ public class Engine implements ActionListener {
 		equal.addActionListener(this);
 		divide.addActionListener(this);
 	} // CIERRA ADD_ACTION_EVENT()
-
+	
+	/**
+	 * Tiene la operacion cuando el usuario le da a =
+	 */
 	public void operation() {
+		operacion = display.getText();
 
+		// EXPRESION REGULAR
+		String patron = "([-+]?(?:\\d+\\.?\\d*|\\.\\d+))([-+*/])([-+]?(?:\\d+\\.?\\d*|\\.\\d+))";
+		Pattern pattern = Pattern.compile(patron);
+		Matcher matcher = pattern.matcher(operacion);
+
+		if (matcher.matches()) {
+
+			num1 = Integer.parseInt(matcher.group(1));
+			operation = matcher.group(2).charAt(0);
+			num2 = Integer.parseInt(matcher.group(3));
+
+			switch (operation) {
+			case '+':
+				result = num1 + num2;
+				break;
+			case '-':
+				result = num1 - num2;
+				break;
+			case '*':
+				result = num1 * num2;
+				break;
+			case '/':
+				if (num2 != 0) {
+					result = num1 / num2;
+				} else {
+					display.setText("Syntax error");
+				}
+				break;
+			default:
+				display.setText("Syntax error");
+			}
+			
+			display.setText("" + result);
+		} else {
+			display.setText("Syntax error");
+		}
 	} // CIERRA OPERATION
-
+	
+	/**
+	 * Toda la logica de cuando da clic a los botones. LLama a operation() cuando le da a =
+	 */
 	@Override
 	public void actionPerformed(ActionEvent e) {
 
-		String operacion = null;
+		
 		String[] partes = null;
 
 		Object source = e.getSource();
@@ -217,44 +284,7 @@ public class Engine implements ActionListener {
 		switch (input_text) {
 
 		case "=":
-			operacion = display.getText();
-
-			// EXPRESION REGULAR
-			String patron = "([-+]?(?:\\d+\\.?\\d*|\\.\\d+))([-+*/])([-+]?(?:\\d+\\.?\\d*|\\.\\d+))";
-			Pattern pattern = Pattern.compile(patron);
-			Matcher matcher = pattern.matcher(operacion);
-
-			if (matcher.matches()) {
-
-				num1 = Integer.parseInt(matcher.group(1));
-				operation = matcher.group(2).charAt(0);
-				num2 = Integer.parseInt(matcher.group(3));
-
-				switch (operation) {
-				case '+':
-					result = num1 + num2;
-					break;
-				case '-':
-					result = num1 - num2;
-					break;
-				case '*':
-					result = num1 * num2;
-					break;
-				case '/':
-					if (num2 != 0) {
-						result = num1 / num2;
-					} else {
-						display.setText("Syntax error");
-					}
-					break;
-				default:
-					display.setText("Syntax error");
-				}
-				
-				display.setText("" + result);
-			} else {
-				display.setText("Syntax error");
-			}
+			operation();
 
 			break;
 		}
